@@ -76,7 +76,7 @@ def syn_scan(ip_address):
         elif resp.haslayer(TCP):  
             #getlayer() utilisée pour récupérer une couche spécifique à partir d'un paquet réseau. Permet d'accéder directement à une couche particulière 
             #d'un paquet afin d'effectuer des opérations spécifiques 
-            if resp.getlayer(TCP.flags == 0x12):
+            if resp.getlayer(TCP.flags == 0x12) or resp.getlayer(TCP.flags == 0x24):
                 send_rst = sr(IP(dst=ip_address) / TCP(sport=src_port,dport=port, flags='R'), timeout=1,verbose=0)
                 print(f"{port} open/TCP")
 
