@@ -102,7 +102,7 @@ def syn_scan(ip_address):
             if int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code in [1, 2, 3, 9, 10, 13]):
                 print(f"{ip_address} : {port} is filtered")
 
-def scan_network(network):
+def scan_network(network : str):
     try:
         addresses = IPv4Network(network)
         for address in addresses:
@@ -116,7 +116,7 @@ def scan_network(network):
                 if int(resp.getlayer(ICMP).type) == 0:
                     print(f"{address} host is up")
                 print(f"{address} host seems down")
-    except TypeError:
+    except ValueError:
         print("Be sure to enter a network with a mask like this :\n 192.168.0.0/32")
                 
                     
@@ -132,4 +132,6 @@ if __name__ == '__main__':
         scan_ports(sys.argv[2])
     if args.scan_networks:
         scan_network(sys.argv[2])
+    if args.syn_scan:
+        syn_scan(sys.argv[2])
 
