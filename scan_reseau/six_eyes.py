@@ -77,15 +77,15 @@ def syn_scan(ip_address):
         elif resp.haslayer(TCP):  
             #getlayer() utilisée pour récupérer une couche spécifique à partir d'un paquet réseau. Permet d'accéder directement à une couche particulière 
             #d'un paquet afin d'effectuer des opérations spécifiques 
-            if resp.getlayer(TCP.flags == 0x12) or resp.getlayer(TCP.flags == 0x24):
+            if(resp.getlayer(TCP).flags == 0x12): #or resp.getlayer(TCP.flags == 0x24):
                 send_rst = sr(IP(dst=ip_address) / TCP(sport=src_port,dport=port, flags='R'), timeout=1,verbose=0)
                 print(f"{port} open/TCP")
 
             # 0x14 RST 0x04 + ACK 0x10
-            elif resp.getlayer(TCP.flags == 0x14):
+            elif(resp.getlayer(TCP).flags == 0x14):
                 print(f"{ip_address}:{port} closed/TCP")
         
-        elif resp.haslayer(ICMP):
+        elif(resp.haslayer(ICMP)):
             # resp.getlayer(ICMP).type va renvoyer l'en-tête ICMP contenu dans cette couche
             # L'en-tête ICMP peut prendre plusieurs valeurs qui correspond à différents messages ICMP :
             # 0 : Echo reply (réponse à la demande Echo)
@@ -112,8 +112,8 @@ def scan_network(network : str):
             
             resp = sr1(IP(dst=address)/ICMP(), timeout=1)
             
-            if resp.haslayer(ICMP):
-                if int(resp.getlayer(ICMP).type) == 0:
+            if(resp.haslayer(ICMP)):
+                if(int(resp.getlayer(ICMP).type) == 0):
                     print(f"{address} host is up")
                 print(f"{address} host seems down")
     except ValueError:
