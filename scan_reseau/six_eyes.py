@@ -5,7 +5,7 @@ from datetime import time
 import argparse
 from scapy.all import *
 import random
-
+from ipaddress import IPv4Network
 
 # 1. Allow user to specify target 
 # 2. Make requests to every port
@@ -43,14 +43,15 @@ Code : 0x01 (1 en décimal)
 
 """
     
-
+ASCII_BANNER = pyfiglet.figlet_format("SIX EYES")
 
 
 parser = argparse.ArgumentParser(description="scanneur de ports")
-parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to specify an ip address", required=True)
+parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to specify an ip address")
 #dest : specify the attribute name used in the result namespace, utilisé pour spécifier le nom de l'attribut dans lequel la valeur de
 # l'argument doit être stockée une fois qu'il est analysé.
 parser.add_argument('-sS', "--syn-scan", dest='syn_scan', help="allow to send syn flag", required=False)
+parser.add_argument('-SN', "--scan-network", dest='scan_networks', help="Allow you to scan an entire network")
 args = parser.parse_args()
 
 
@@ -101,16 +102,34 @@ def syn_scan(ip_address):
             if int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code in [1, 2, 3, 9, 10, 13]):
                 print(f"{ip_address} : {port} is filtered")
 
+def scan_network(network):
+    try:
+        addresses = IPv4Network(network)
+        for address in addresses:
+            if (address in(addresses.network_address, addresses.broadcast_address)):
+                #Skip the broadcast address and the network address
+                continue
+            
+            resp = sr1(IP(dst=address)/ICMP(), timeout=1)
+            
+            if resp.haslayer(ICMP):
+                if int(resp.getlayer(ICMP).type) == 0:
+                    print(f"{address} host is up")
+                print(f"{address} host seems down")
+    except TypeError:
+        print("Be sure to enter a network with a mask like this :\n 192.168.0.0/32")
                 
-                
+                    
+                 
     
     
 
 
 
 if __name__ == '__main__':
-    ascii_banner = pyfiglet.figlet_format("SIX EYES")
-    print(ascii_banner)
+    print(ASCII_BANNER)
     if args.ip_address:
         scan_ports(sys.argv[2])
+    if args.scan_networks:
+        scan_network(sys.argv[2])
 
