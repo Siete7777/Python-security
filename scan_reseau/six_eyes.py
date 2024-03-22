@@ -12,10 +12,45 @@ import random
 # 3. Return open ports
 
 
+
+"""
+URG (Urgent) : Ce drapeau indique que les données urgentes sont présentes dans le segment TCP.
+
+Code : 0x20 (32 en décimal)
+ACK (Acknowledgment) : Ce drapeau indique que le numéro d'acquittement (ACK) est valide.
+
+Code : 0x10 (16 en décimal)
+PSH (Push) : Ce drapeau indique que les données doivent être poussées vers l'application destinataire dès qu'elles sont disponibles, sans attendre de remplir le tampon de sortie.
+
+Code : 0x08 (8 en décimal)
+RST (Reset) : Ce drapeau indique une demande de réinitialisation de la connexion.
+
+Code : 0x04 (4 en décimal)
+SYN (Synchronize) : Ce drapeau est utilisé lors de l'établissement de la connexion TCP pour synchroniser les numéros de séquence.
+
+Code : 0x02 (2 en décimal)
+FIN (Finish) : Ce drapeau indique la fin d'une connexion TCP.
+
+Code : 0x01 (1 en décimal)
+"""
+
+""" 
+ ____ _____  __  _______   _______ ____  
+/ ___|_ _\ \/ / | ____\ \ / / ____/ ___| 
+\___ \| | \  /  |  _|  \ V /|  _| \___ \ 
+ ___) | | /  \  | |___  | | | |___ ___) |
+|____/___/_/\_\ |_____| |_| |_____|____/ 
+
+"""
+    
+
+
+
 parser = argparse.ArgumentParser(description="scanneur de ports")
 parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to specify an ip address", required=True)
 #dest : specify the attribute name used in the result namespace, utilisé pour spécifier le nom de l'attribut dans lequel la valeur de
 # l'argument doit être stockée une fois qu'il est analysé.
+parser.add_argument('-sS', "--syn-scan", dest='syn_scan', help="allow to send syn flag", required=False)
 args = parser.parse_args()
 
 
@@ -32,17 +67,42 @@ def scan_ports(ip_adress):
 #haslayer() méthode utilisée pour vérifier si un paquet réseau possède une couche spécifique. Cette méthode renvoie un booléen.
 
 def syn_scan(ip_address):
-    for i in range(65536):
+    for port in range(65536):
         src_port = random.randint(1025,65534)
-        resp = sr1(IP(dst=ip_address)/TCP(sport=src_port,dport=i,flags="S"), timeout=1, verbose=0)
+        resp = sr1(IP(dst=ip_address)/TCP(sport=src_port,dport=port,flags="S"), timeout=1, verbose=0)
         if resp is None:
-            print(f"{ip_address}:{i} is filtered.")
+            print(f"{ip_address}:{port} is filtered.")
 
         elif resp.haslayer(TCP):  
             #getlayer() utilisée pour récupérer une couche spécifique à partir d'un paquet réseau. Permet d'accéder directement à une couche particulière 
             #d'un paquet afin d'effectuer des opérations spécifiques 
-            if resp.getlayer((TCP).flags == 0x12):
+            if resp.getlayer(TCP.flags == 0x12):
+                send_rst = sr(IP(dst=ip_address) / TCP(sport=src_port,dport=port, flags='R'), timeout=1,verbose=0)
+                print(f"{port} open/TCP")
+
+            # 0x14 RST 0x04 + ACK 0x10
+            elif resp.getlayer(TCP.flags == 0x14):
+                print(f"{ip_address}:{port} closed/TCP")
+        
+        elif resp.haslayer(ICMP):
+            # resp.getlayer(ICMP).type va renvoyer l'en-tête ICMP contenu dans cette couche
+            # L'en-tête ICMP peut prendre plusieurs valeurs qui correspond à différents messages ICMP :
+            # 0 : Echo reply (réponse à la demande Echo)
+            # 3 : Destination Unreachable (Destination inaccessible)
+            # 8 : Echo Request (demande Echo)
+            # 11 : Time Exceeded (délai dépassé)
             
+            # resp.getlayer(ICMP).code renvoie le code associé à l'en-tête contenu dans la couche ICMP du paquet resp
+            # le code est une valeur qui accompagne le type dans certains messages ICMP pour fournir plus d'informations sur la nature
+            # de l'erreur
+            # Par exemple, dans les messages ICMP de type "Destination Unreachable", 
+            # #le code peut indiquer la raison spécifique pour laquelle la destination est inaccessible, 
+            # comme "Host Unreachable" (code 1) ou "Port Unreachable" (code 3).
+            if int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code in [1, 2, 3, 9, 10, 13]):
+                print(f"{ip_address} : {port} is filtered")
+
+                
+                
     
     
 
