@@ -110,7 +110,7 @@ def scan_network(network : str):
                 #Skip the broadcast address and the network address
                 continue
             
-            resp = sr1(IP(dst=address)/ICMP(), timeout=1)
+            resp = sr1(IP(dst=str(address))/ICMP(), timeout=1)
             
             if(resp.haslayer(ICMP)):
                 if(int(resp.getlayer(ICMP).type) == 0):
