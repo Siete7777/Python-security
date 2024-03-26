@@ -57,6 +57,8 @@ args = parser.parse_args()
 
 def scan_ports(ip_adress):
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    #AF_INET fait référence à la famille d'adresses IPV4. On utilise des adresses au format IPV4 pour communiquer
+    # SOCK_STREAM est utilisé pour les sockets de type flux. Cela signifie que les données sont transférés dans un flux continu de bytes. Ces sockets utilisent le protocole TCP
     try:
         for port in range(1, 65536):
             if s.connect_ex((ip_adress, port)) == 0:
@@ -72,13 +74,22 @@ def syn_scan(ip_address):
         src_port = random.randint(1025,65534)
         resp = sr1(IP(dst=ip_address)/TCP(sport=src_port,dport=port,flags="S"), timeout=1, verbose=0)
         if resp is None:
-            print(f"{ip_address}:{port} is filtered.")
+            continue
 
         elif resp.haslayer(TCP):  
             #getlayer() utilisée pour récupérer une couche spécifique à partir d'un paquet réseau. Permet d'accéder directement à une couche particulière 
             #d'un paquet afin d'effectuer des opérations spécifiques 
             if(resp.getlayer(TCP).flags == 0x12): #or resp.getlayer(TCP.flags == 0x24):
                 send_rst = sr(IP(dst=ip_address) / TCP(sport=src_port,dport=port, flags='R'), timeout=1,verbose=0)
+                # verbose est utilisé pour contrôler la quantité de sortie affichée lors de l'exécution de certaines commandes ou fonctions
+                # veborse a 4 niveaux (0,1,2,3)
+                # 0 : mode silencieux
+                # 1 : affiche les erreurs et les avertissements
+                # 2 : affiche des informations supplémentaires lors de l'exécution des commandes.
+                # 3 ou supérieur : affiche les informations de débogage détaillées.
+                #
+                # timeout : est utilisé pour sépcifier la durée maximale d'attente pour cetaines opérations dans scapy. Donc timeout=1 signifie que Scapy 
+                # attendra au maximum une seconde avant de considérer l'opération comme ayant échouée. 
                 print(f"{port} open/TCP")
 
             # 0x14 RST 0x04 + ACK 0x10
@@ -117,7 +128,7 @@ def scan_network(network : str):
                     print(f"{address} host is up")
                 print(f"{address} host seems down")
     except ValueError:
-        print("Be sure to enter a network with a mask like this :\n 192.168.0.0/32")
+        print("Be sure to enter a network with a valide mask like this :\n 192.168.0.0/32")
                 
                     
                  
