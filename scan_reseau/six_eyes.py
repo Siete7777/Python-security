@@ -122,10 +122,15 @@ def scan_network(network : str):
                 continue
             
             resp = sr1(IP(dst=str(address))/ICMP(), timeout=1)
+<<<<<<< HEAD
             # Rappel : continue permet de passer directement à l'itération suivante sans même exécuter la suite du code
             if resp is None:
                 continue
             elif(resp.haslayer(ICMP)):
+=======
+            
+            if(resp.haslayer(ICMP)):
+>>>>>>> 7a761ec4f522beb3d8d0cb26eb8e216d41b35050
                 if(int(resp.getlayer(ICMP).type) == 0):
                     print(f"{address} host is up")
             
