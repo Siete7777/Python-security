@@ -111,7 +111,7 @@ def syn_scan(ip_address):
             # #le code peut indiquer la raison spécifique pour laquelle la destination est inaccessible, 
             # comme "Host Unreachable" (code 1) ou "Port Unreachable" (code 3).
             if int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code in [1, 2, 3, 9, 10, 13]):
-                print(f"{ip_address} : {port} is filtered")
+                print(f"{ip_address} : {port} is filtered") 
 
 def scan_network(network : str):
     try:
@@ -121,17 +121,18 @@ def scan_network(network : str):
                 #Skip the broadcast address and the network address
                 continue
             
-            resp = sr1(IP(dst=address)/ICMP(), timeout=1)
-            
-            if(resp.haslayer(ICMP)):
+            resp = sr1(IP(dst=str(address))/ICMP(), timeout=1)
+            # Rappel : continue permet de passer directement à l'itération suivante sans même exécuter la suite du code
+            if resp is None:
+                continue
+            elif(resp.haslayer(ICMP)):
                 if(int(resp.getlayer(ICMP).type) == 0):
                     print(f"{address} host is up")
-                print(f"{address} host seems down")
+            
+                
     except ValueError:
         print("Be sure to enter a network with a valide mask like this :\n 192.168.0.0/32")
-                
-                    
-                 
+                             
     
     
 
