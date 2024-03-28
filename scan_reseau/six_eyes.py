@@ -51,7 +51,7 @@ parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to s
 #dest : specify the attribute name used in the result namespace, utilisé pour spécifier le nom de l'attribut dans lequel la valeur de
 # l'argument doit être stockée une fois qu'il est analysé.
 parser.add_argument('-sS', "--syn-scan", dest='syn_scan', help="allow to send syn flag", required=False)
-parser.add_argument('-SN', "--scan-network", dest='scan_networks', help="Allow you to scan an entire network")
+parser.add_argument('-SN', "--scan-network", dest='scan_network', help="Allow you to scan an entire network")
 args = parser.parse_args()
 
 
@@ -122,15 +122,10 @@ def scan_network(network : str):
                 continue
             
             resp = sr1(IP(dst=str(address))/ICMP(), timeout=1)
-<<<<<<< HEAD
             # Rappel : continue permet de passer directement à l'itération suivante sans même exécuter la suite du code
             if resp is None:
                 continue
             elif(resp.haslayer(ICMP)):
-=======
-            
-            if(resp.haslayer(ICMP)):
->>>>>>> 7a761ec4f522beb3d8d0cb26eb8e216d41b35050
                 if(int(resp.getlayer(ICMP).type) == 0):
                     print(f"{address} host is up")
             
@@ -139,7 +134,10 @@ def scan_network(network : str):
         print("Be sure to enter a network with a valide mask like this :\n 192.168.0.0/32")
                              
     
-    
+# https://nmap.org/man/fr/man-version-detection.html
+
+def scan_version(ip_address : str):
+    pass
 
 
 
@@ -147,7 +145,7 @@ if __name__ == '__main__':
     print(ASCII_BANNER)
     if args.ip_address:
         scan_ports(sys.argv[2])
-    if args.scan_networks:
+    if args.scan_network:
         scan_network(sys.argv[2])
     if args.syn_scan:
         syn_scan(sys.argv[2])
