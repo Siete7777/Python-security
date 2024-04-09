@@ -52,6 +52,7 @@ parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to s
 # l'argument doit être stockée une fois qu'il est analysé.
 parser.add_argument('-sS', "--syn-scan", dest='syn_scan', help="allow to send syn flag", required=False)
 parser.add_argument('-SN', "--scan-network", dest='scan_networks', help="Allow you to scan an entire network")
+parser.add_argument('sU',"--udp-scan", dest="udp_scan", help="allows you to launch udp scan" )
 args = parser.parse_args()
 
 
@@ -122,21 +123,27 @@ def scan_network(network : str):
                 continue
             
             resp = sr1(IP(dst=str(address))/ICMP(), timeout=1)
-<<<<<<< HEAD
             # Rappel : continue permet de passer directement à l'itération suivante sans même exécuter la suite du code
             if resp is None:
                 continue
             elif(resp.haslayer(ICMP)):
-=======
-            
-            if(resp.haslayer(ICMP)):
->>>>>>> 7a761ec4f522beb3d8d0cb26eb8e216d41b35050
                 if(int(resp.getlayer(ICMP).type) == 0):
                     print(f"{address} host is up")
             
                 
     except ValueError:
-        print("Be sure to enter a network with a valide mask like this :\n 192.168.0.0/32")
+        print("Be sure to enter a network with a valide mask like this :\n 192.168.0.0/32")*
+
+
+def udp_scan(ip_address : str):
+    for port in range(65536):
+        src_port = random.randint(1025,65534)
+        resp = sr1(IP(dst=ip_address) / UDP())
+
+        if resp is None or resp.haslayer(UDP):
+            print(f"{port} open/udp")
+        else:
+            continue
                              
     
     
