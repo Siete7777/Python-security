@@ -7,32 +7,6 @@ from scapy.all import *
 import random
 from ipaddress import IPv4Network
 
-# 1. Allow user to specify target 
-# 2. Make requests to every port
-# 3. Return open ports
-
-
-
-"""
-URG (Urgent) : Ce drapeau indique que les données urgentes sont présentes dans le segment TCP.
-
-Code : 0x20 (32 en décimal)
-ACK (Acknowledgment) : Ce drapeau indique que le numéro d'acquittement (ACK) est valide.
-
-Code : 0x10 (16 en décimal)
-PSH (Push) : Ce drapeau indique que les données doivent être poussées vers l'application destinataire dès qu'elles sont disponibles, sans attendre de remplir le tampon de sortie.
-
-Code : 0x08 (8 en décimal)
-RST (Reset) : Ce drapeau indique une demande de réinitialisation de la connexion.
-
-Code : 0x04 (4 en décimal)
-SYN (Synchronize) : Ce drapeau est utilisé lors de l'établissement de la connexion TCP pour synchroniser les numéros de séquence.
-
-Code : 0x02 (2 en décimal)
-FIN (Finish) : Ce drapeau indique la fin d'une connexion TCP.
-
-Code : 0x01 (1 en décimal)
-"""
 
 """ 
  ____ _____  __  _______   _______ ____  
@@ -48,18 +22,15 @@ ASCII_BANNER = pyfiglet.figlet_format("SIX EYES")
 
 parser = argparse.ArgumentParser(description="scanneur de ports")
 parser.add_argument("-ip", "--ipaddress", dest="ip_address", help="you need to specify an ip address")
-#dest : specify the attribute name used in the result namespace, utilisé pour spécifier le nom de l'attribut dans lequel la valeur de
-# l'argument doit être stockée une fois qu'il est analysé.
 parser.add_argument('-sS', "--syn-scan", dest='syn_scan', help="allow to send syn flag", required=False)
 parser.add_argument('-SN', "--scan-network", dest='scan_networks', help="Allow you to scan an entire network")
 parser.add_argument('-sU',"--udp-scan", dest="udp_scan", help="allows you to launch udp scan" )
+parser.add_argument('-arp', "--arp", dest="arp_scan", help="Will try to see which hosts are up on the network")
 args = parser.parse_args()
 
 
 def scan_ports(ip_adress):
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-    #AF_INET fait référence à la famille d'adresses IPV4. On utilise des adresses au format IPV4 pour communiquer
-    # SOCK_STREAM est utilisé pour les sockets de type flux. Cela signifie que les données sont transférés dans un flux continu de bytes. Ces sockets utilisent le protocole TCP
     try:
         for port in range(1, 65536):
             if s.connect_ex((ip_adress, port)) == 0:
@@ -69,6 +40,11 @@ def scan_ports(ip_adress):
         print("Une erreur de connexion s'est produite")
 
 #haslayer() méthode utilisée pour vérifier si un paquet réseau possède une couche spécifique. Cette méthode renvoie un booléen.
+
+def retrieve_arp(network: str):
+    return arping(network)
+
+    
 
 def syn_scan(ip_address):
     for port in range(65536):
@@ -82,15 +58,6 @@ def syn_scan(ip_address):
             #d'un paquet afin d'effectuer des opérations spécifiques 
             if(resp.getlayer(TCP).flags == 0x12): #or resp.getlayer(TCP.flags == 0x24):
                 send_rst = sr(IP(dst=ip_address) / TCP(sport=src_port,dport=port, flags='R'), timeout=1,verbose=0)
-                # verbose est utilisé pour contrôler la quantité de sortie affichée lors de l'exécution de certaines commandes ou fonctions
-                # veborse a 4 niveaux (0,1,2,3)
-                # 0 : mode silencieux
-                # 1 : affiche les erreurs et les avertissements
-                # 2 : affiche des informations supplémentaires lors de l'exécution des commandes.
-                # 3 ou supérieur : affiche les informations de débogage détaillées.
-                #
-                # timeout : est utilisé pour sépcifier la durée maximale d'attente pour cetaines opérations dans scapy. Donc timeout=1 signifie que Scapy 
-                # attendra au maximum une seconde avant de considérer l'opération comme ayant échouée. 
                 print(f"{port} open/TCP")
 
             # 0x14 RST 0x04 + ACK 0x10
@@ -98,19 +65,6 @@ def syn_scan(ip_address):
                 print(f"{ip_address}:{port} closed/TCP")
         
         elif(resp.haslayer(ICMP)):
-            # resp.getlayer(ICMP).type va renvoyer l'en-tête ICMP contenu dans cette couche
-            # L'en-tête ICMP peut prendre plusieurs valeurs qui correspond à différents messages ICMP :
-            # 0 : Echo reply (réponse à la demande Echo)
-            # 3 : Destination Unreachable (Destination inaccessible)
-            # 8 : Echo Request (demande Echo)
-            # 11 : Time Exceeded (délai dépassé)
-            
-            # resp.getlayer(ICMP).code renvoie le code associé à l'en-tête contenu dans la couche ICMP du paquet resp
-            # le code est une valeur qui accompagne le type dans certains messages ICMP pour fournir plus d'informations sur la nature
-            # de l'erreur
-            # Par exemple, dans les messages ICMP de type "Destination Unreachable", 
-            # #le code peut indiquer la raison spécifique pour laquelle la destination est inaccessible, 
-            # comme "Host Unreachable" (code 1) ou "Port Unreachable" (code 3).
             if int(resp.getlayer(ICMP).type) == 3 and int(resp.getlayer(ICMP).code in [1, 2, 3, 9, 10, 13]):
                 print(f"{ip_address} : {port} is filtered") 
 
@@ -142,9 +96,13 @@ def udp_scan(ip_address : str):
 
         if resp is None or resp.haslayer(UDP):
             print(f"{port} open/udp")
-        else:
-            continue
-                             
+
+
+def wifi_probe_request(mac_address : str):
+    # RadioTap() permet de créer et de manipuler des en-têtes RadioTap.
+    # RadiotTap est un en-tête utilisé dans les trames Wi-Fi pour encapsuler des métadonnées liées à la capture du paquet par une interface Radio
+    packet = 
+
     
 # https://nmap.org/man/fr/man-version-detection.html
 
@@ -161,4 +119,6 @@ if __name__ == '__main__':
         scan_network(sys.argv[2])
     if args.syn_scan:
         syn_scan(sys.argv[2])
+    if args.arp_scan:
+        retrieve_arp(sys.argv[2])
 
